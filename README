@@ -7,19 +7,32 @@ OR xsltproc (http://www.xmlsoft.org/XSLT/xsltproc2.html) and grep (http://www.gn
 Hpricot takes precedence over xsltproc. 
 There are four files on the package: the Vim script, the Ruby script, the XSL file and the syntax file.
 
-To install, unpack the files on your ~/.vim directory and source it to make it available. You
-can also use the Makefile to install the files, just type:
-make install
+To install, unpack the files on your $VIMRUNTIME directory (on Mac:  /Applications/Vim.app/Contents/Resources/vim/runtime). 
+You can also use the Makefile to install the files, just type:
+	VIMRUNTIME=/Applications/Vim.app/Contents/Resources/vim/runtime make install
+You can find the VIMRUNTIME directory by typing "echo $VIMRUNTIME" in VIM's command line.
 
 USAGE
 -----
-There are two commands available: 
+There are three commands available: 
 
-You can run RunSpec and spec will run with the current file (if it's a *_spec.rb file) 
+You can run RunSpec and spec will run with the current spec under the cursor (if it's in a *_spec.rb file).
+You can run RunSpec and spec will run with the current file (if it's a *_spec.rb file). 
 You can run RunSpecs and spec will run with all the files inside the spec directory. 
 
 After some of the commands above runs, it will open a new window with the result, where you can click on the error 
-lines where there's a file path with the line number and it will open on a new window, moving the cursor to the 
+lines where there's a file path with the line number (press <CR>) and it will open on a new window, moving the cursor to the 
 line where the error is.
 
+Once you have run a spec, you can re-run it with the same command (key mapping) while you are working with 
+your source rb files without switching back to the spec file.
+
 Of course, you can create some mappings to make easier to call the commands.
+
+Here are my key mappings in .vimrc file:
+
+"	RunSpec: <command-x|y|z>
+nmap	<d-x>	:RunSpec<cr>
+nmap	<d-y>	:RunSpecFile<cr>
+nmap	<d-z>	:RunSpecDir<cr>
+
