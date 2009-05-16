@@ -59,21 +59,52 @@ function! s:RunSpecMain(type)
 			return
 		end
 	end		
-	let l:bufn = bufname("%")
+	let l:bufn = expand("%:p")
+	"let l:bufn = fnamemodify(bufname("%"))
+	"let l:bufn = bufname("%")
 
 	" filters
-	let l:xsl   = expand("~/").".vim/plugin/vim-rspec.xsl"
-	let l:rubys = expand("~/").".vim/plugin/vim-rspec.rb"
+	let l:xsl   = $VIMRUNTIME . "/plugin/vim-rspec.xsl"
+	let l:rubys = $VIMRUNTIME . "/plugin/vim-rspec.rb"
+	" let l:xsl   = expand("~/").".vim/plugin/vim-rspec.xsl"
+	" let l:rubys = expand("~/").".vim/plugin/vim-rspec.rb"
 
 	" hpricot gets the priority
 	let l:type		= s:hpricot ? "hpricot" : "xsltproc"
 	let l:filter	= s:hpricot ? "ruby ".l:rubys : "xsltproc --novalid --html ".l:xsl." - "
 
+	let l:line		= line(".")
+
+	" save the global vars for quick access
+	if exists("g:bufn")<0
+		let g:bufn = ''
+	endif
+	if exists("g:line")<0
+		let g:line = '1'
+	endif
+	if match(l:bufn,'_spec.rb')<0
+		let l:bufn = g:bufn
+		let l:line = g:line
+	endif
+
+	" run just the current line
+	if a:type=="line"
+		if match(l:bufn,'_spec.rb')>=0
+			call s:notice_msg("Running spec on the current file with ".l:type." on line ".l:line." ...")
+			let l:spec  = "spec -l ".l:line." -f h ".l:bufn
+			let g:bufn = l:bufn
+			let g:line = l:line
+		else
+			call s:error_msg("Seems ".l:bufn." is not a *_spec.rb file")
+			return
+		end			
 	" run just the current file
-	if a:type=="file"
+	elseif a:type=="file"
 		if match(l:bufn,'_spec.rb')>=0
 			call s:notice_msg("Running spec on the current file with ".l:type." ...")
 			let l:spec  = "spec -f h ".l:bufn
+			let g:bufn = l:bufn
+			let g:line = l:line
 		else
 			call s:error_msg("Seems ".l:bufn." is not a *_spec.rb file")
 			return
@@ -122,6 +153,7 @@ function! s:RunSpecMain(type)
 	setl foldexpr=getline(v:lnum)=~'^\+'
 	setl foldtext=\"+--\ \".string(v:foldend-v:foldstart+1).\"\ passed\ \"
 	call cursor(1,1)	
+	let @/ = "^- "
 endfunction
 
 function! s:TryToOpen()
@@ -131,17 +163,34 @@ function! s:TryToOpen()
 		return
 	end
 	let l:tokens = split(l:line,":")
-	silent exec "sp ".substitute(l:tokens[0],'/^\s\+',"","")
+	let l:fname = substitute(l:tokens[0],"^\\s\\+\\|\\s\\+$","","g")
+	let l:bname = bufname(l:fname)
+	if l:bname == ""
+		let l:bnum = -1
+	else
+		let l:bnum = bufnr(l:bname)
+	endif
+	exe "norm \<C-W>j"
+	if l:bnum != -1
+		silent exec "e #".l:bnum
+	else
+		silent exec "e ".l:fname
+	endif
 	call cursor(l:tokens[1],1)
 endfunction
 
 function! RunSpec()
+	call s:RunSpecMain("line")
+endfunction
+
+function! RunSpecFile()
 	call s:RunSpecMain("file")
 endfunction
 
-function! RunSpecs()
+function! RunSpecDir()
 	call s:RunSpecMain("dir")
 endfunction
 
-command! RunSpec	call RunSpec()
-command! RunSpecs	call RunSpecs()
+command! RunSpec		call RunSpec()
+command! RunSpecFile	call RunSpecFile()
+command! RunSpecDir	call RunSpecDir()
